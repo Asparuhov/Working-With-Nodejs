@@ -1,4 +1,7 @@
 const Product = require("../models/product");
+const mongodb = require('mongodb');
+
+const IdObject = mongodb.ObjectId;
 
 exports.getAddProduct = (req, res, next) => {
   res.render("admin/edit-product", {
@@ -23,13 +26,25 @@ exports.postAddProduct = (req, res, next) => {
     .catch((err) => console.log(err));
 };
 
-/* exports.getEditProduct = (req, res, next) => {
+exports.getProducts = (req, res, next) => {
+  Product.fetchAll()
+    .then((products) => {
+      res.render("admin/products", {
+        prods: products,
+        pageTitle: "Admin Products",
+        path: "/admin/products",
+      });
+    })
+    .catch((err) => console.log(err));
+};
+
+ exports.getEditProduct = (req, res, next) => {
   const editMode = req.query.edit;
   if (!editMode) {
     return res.redirect("/");
   }
   const prodId = req.params.productId;
-  Product.findByPk(prodId).then((product) => {
+  Product.findById(prodId).then((product) => {
     if (!product) {
       return res.redirect("/");
     }
@@ -48,31 +63,14 @@ exports.postEditProduct = (req, res, next) => {
   const updatedPrice = req.body.price;
   const updatedImageUrl = req.body.imageUrl;
   const updatedDesc = req.body.description;
-  Product.findByPk(prodId)
-    .then((product) => {
-      product.title = updatedTitle;
-      product.price = updatedPrice;
-      product.imageUrl = updatedImageUrl;
-      product.description = updatedDesc;
-      return product.save();
-    })
-    .then(() => {
+  const product = new Product(updatedTitle, updatedPrice, updatedImageUrl, updatedDesc, new mongodb.ObjectID(prodId));
+    product.save().then(() => {
       console.log(`Updated product`);
       res.redirect("/admin/products");
     })
     .catch((err) => console.log(err));
 };
-
-exports.getProducts = (req, res, next) => {
-  req.user.getProducts().then((products) => {
-    res.render("admin/products", {
-      prods: products,
-      pageTitle: "Admin Products",
-      path: "/admin/products",
-    });
-  });
-};
-
+/*
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
   Product.findByPk(prodId)
